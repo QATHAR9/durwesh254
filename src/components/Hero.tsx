@@ -8,9 +8,9 @@ const Hero: React.FC = () => {
         <img 
           src="https://images.pexels.com/photos/965989/pexels-photo-965989.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2" 
           alt="Luxury perfume background" 
-          className="w-full h-full object-cover opacity-30"
+          className="w-full h-full object-cover opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#004D40]/80 via-[#004D40]/60 to-[#004D40]/80"></div>
       </div>
       
       {/* Content */}
@@ -28,7 +28,7 @@ const Hero: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <a 
             href="#products"
-            className="bg-white text-black px-8 py-4 font-semibold rounded-lg hover:bg-gold-500 hover:text-white transition-all duration-300 transform hover:-translate-y-1 shadow-lg"
+            className="bg-white text-[#004D40] px-8 py-4 font-semibold rounded-lg hover:bg-gold-500 hover:text-white transition-all duration-300 transform hover:-translate-y-1 shadow-lg"
           >
             Shop Collection
           </a>
@@ -36,7 +36,7 @@ const Hero: React.FC = () => {
             href="https://wa.me/254706183308"
             target="_blank"
             rel="noopener noreferrer"
-            className="border-2 border-white text-white px-8 py-4 font-semibold rounded-lg hover:bg-white hover:text-black transition-all duration-300 transform hover:-translate-y-1"
+            className="border-2 border-white text-white px-8 py-4 font-semibold rounded-lg hover:bg-white hover:text-[#004D40] transition-all duration-300 transform hover:-translate-y-1"
           >
             Contact Us
           </a>

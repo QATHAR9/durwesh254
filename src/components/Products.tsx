@@ -16,7 +16,7 @@ const Products: React.FC<ProductsProps> = ({ products, onAddToCart }) => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Perfume | null>(null);
 
-  const categories = [...new Set(products.map(p => p.category))];
+  const categories = ['For Him', 'For Her', 'Unisex'];
   
   const filteredProducts = products.filter(product => {
     if (!filterBy) return true;
@@ -51,6 +51,17 @@ const Products: React.FC<ProductsProps> = ({ products, onAddToCart }) => {
     }
   };
 
+  // Close dropdowns when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setShowFilterDropdown(false);
+      setShowSortDropdown(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   return (
     <section id="products" className="py-12 md:py-20 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -66,13 +77,14 @@ const Products: React.FC<ProductsProps> = ({ products, onAddToCart }) => {
           <div className="relative">
             <button 
               className="w-full sm:w-48 bg-white border border-gray-300 px-6 py-3 rounded-lg flex items-center justify-between hover:border-gray-400 transition-colors shadow-sm"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowFilterDropdown(!showFilterDropdown);
                 setShowSortDropdown(false);
               }}
             >
               <span className="font-medium">
-                {filterBy ? `Category: ${filterBy}` : 'Shop by Category'}
+                {filterBy || 'Shop by Category'}
               </span>
               <ChevronDown size={20} className={`transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} />
             </button>
@@ -107,13 +119,18 @@ const Products: React.FC<ProductsProps> = ({ products, onAddToCart }) => {
           <div className="relative">
             <button 
               className="w-full sm:w-48 bg-white border border-gray-300 px-6 py-3 rounded-lg flex items-center justify-between hover:border-gray-400 transition-colors shadow-sm"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowSortDropdown(!showSortDropdown);
                 setShowFilterDropdown(false);
               }}
             >
               <span className="font-medium">
-                {sortBy ? `Sort: ${sortBy === 'price-low' ? 'Price Low' : sortBy === 'price-high' ? 'Price High' : 'Name'}` : 'Sort by'}
+                {sortBy ? 
+                  sortBy === 'price-low' ? 'Price: Low to High' : 
+                  sortBy === 'price-high' ? 'Price: High to Low' : 
+                  'Name A-Z' 
+                  : 'Sort by'}
               </span>
               <ChevronDown size={20} className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
             </button>
