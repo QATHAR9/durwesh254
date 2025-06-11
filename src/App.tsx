@@ -60,6 +60,23 @@ function App() {
     };
   }, [lastUpdate]);
 
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
   const handleAddToCart = (product: Perfume, quantity: number) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
@@ -90,19 +107,25 @@ function App() {
   };
 
   const handleCheckout = () => {
-    const message = `*New Order*\n\n*Items*\n${cartItems
-      .map(
-        item => `${item.name} (${item.category})
-Quantity: ${item.quantity}
-Price: KES ${item.price.toLocaleString()}/item
-Subtotal: KES ${(item.price * item.quantity).toLocaleString()}\n`
-      )
-      .join('\n')}
-*Order Summary*
+    const message = `*New Order from DURWESH*
+
+*Order Details:*
+${cartItems
+  .map(
+    item => `• ${item.name} (${item.category})
+  Quantity: ${item.quantity}
+  Price: KES ${item.price.toLocaleString()}/item
+  Subtotal: KES ${(item.price * item.quantity).toLocaleString()}`
+  )
+  .join('\n\n')}
+
+*Order Summary:*
 Total Items: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-Total: KES ${cartItems
-      .reduce((sum, item) => sum + item.price * item.quantity, 0)
-      .toLocaleString()}`;
+*Total Amount: KES ${cartItems
+  .reduce((sum, item) => sum + item.price * item.quantity, 0)
+  .toLocaleString()}*
+
+Please confirm availability and provide delivery details.`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/254706183308?text=${encodedMessage}`, '_blank');
@@ -112,11 +135,16 @@ Total: KES ${cartItems
 
   return (
     <div className="font-sans">
-      <Header cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)} onCartClick={() => setIsCartOpen(true)} />
-      <Hero />
-      <Products products={products} onAddToCart={handleAddToCart} />
-      <About />
-      <Contact />
+      <Header 
+        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)} 
+        onCartClick={() => setIsCartOpen(true)} 
+      />
+      <main>
+        <Hero />
+        <Products products={products} onAddToCart={handleAddToCart} />
+        <About />
+        <Contact />
+      </main>
       <Footer />
       <Cart
         isOpen={isCartOpen}
