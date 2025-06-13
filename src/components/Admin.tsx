@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Perfume } from '../types';
-import { Menu, X, Plus, Pencil, Trash2, ChevronLeft, Upload, Eye, AlertCircle, CheckCircle } from 'lucide-react';
+import { Menu, X, Plus, Pencil, Trash2, ChevronLeft, Upload, Eye, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminProps {
@@ -10,9 +10,13 @@ interface AdminProps {
   onUpdateProduct: (id: string, product: Omit<Perfume, 'id'>) => void;
 }
 
-const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, onUpdateProduct }) => {
+const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, onDeleteProduct, onUpdateProduct }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Perfume | null>(null);
+  const [products, setProducts] = useState<Perfume[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     imageUrl: '',
@@ -23,7 +27,6 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
   });
   const [previewImage, setPreviewImage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const navigate = useNavigate();
 
@@ -31,8 +34,41 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 5000);
   };
+
+  // Fetch products from API
+  const fetchProducts = async () => {
+    try {
+      setIsRefreshing(true);
+      const response = await fetch('/api/products');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      showNotification('error', 'Failed to load products. Please try again.');
+      // Fallback to local products if API fails
+      setProducts(localProducts);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Load products on component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -107,24 +143,34 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
     try {
       const productData = {
         name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
         imageUrl: formData.imageUrl.trim(),
         category: formData.category,
-        price: parseFloat(formData.price),
-        description: formData.description.trim(),
         inStock: formData.inStock
       };
 
-      if (editingProduct) {
-        onUpdateProduct(editingProduct.id, productData);
-        showNotification('success', 'Product updated successfully!');
+      const response = await fetch('/api/add-product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showNotification('success', editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
+        resetForm();
+        // Refresh the product list
+        await fetchProducts();
       } else {
-        onAddProduct(productData);
-        showNotification('success', 'Product added successfully!');
+        throw new Error(result.error || 'Failed to save product');
       }
-      
-      resetForm();
     } catch (error) {
-      showNotification('error', 'An error occurred. Please try again.');
+      console.error('Error saving product:', error);
+      showNotification('error', error instanceof Error ? error.message : 'An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -159,22 +205,61 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
     setIsOpen(true);
   };
 
-  const handleDelete = (product: Perfume) => {
-    if (confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
-      onDeleteProduct(product.id);
-      showNotification('success', 'Product deleted successfully!');
+  const handleDelete = async (product: Perfume) => {
+    if (!confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/delete-product/${product.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showNotification('success', 'Product deleted successfully!');
+        // Refresh the product list
+        await fetchProducts();
+      } else {
+        throw new Error(result.error || 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      showNotification('error', error instanceof Error ? error.message : 'Failed to delete product. Please try again.');
     }
   };
+
+  const handleRefresh = () => {
+    fetchProducts();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="py-8 px-4 min-h-screen bg-gray-50">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg ${
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg max-w-md ${
           notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
         }`}>
           {notification.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-          {notification.message}
+          <span className="flex-1">{notification.message}</span>
+          <button 
+            onClick={() => setNotification(null)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
@@ -194,13 +279,23 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
               <p className="text-gray-600">Manage your perfume collection</p>
             </div>
           </div>
-          <button 
-            onClick={() => setIsOpen(true)}
-            className="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-md font-semibold"
-          >
-            <Plus size={20} />
-            Add New Product
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+            <button 
+              onClick={() => setIsOpen(true)}
+              className="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-md font-semibold"
+            >
+              <Plus size={20} />
+              Add New Product
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -447,6 +542,7 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products, onDeleteProduct, 
                         value={formData.description}
                         onChange={(e) => handleInputChange('description', e.target.value)}
                         rows={4}
+                        maxLength={500}
                         className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors resize-vertical ${
                           errors.description ? 'border-red-500' : 'border-gray-300'
                         }`}

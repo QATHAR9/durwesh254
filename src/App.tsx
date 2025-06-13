@@ -13,52 +13,36 @@ function App() {
   const [products, setProducts] = useState<Perfume[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch products from API
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      // Fallback to sample data if API fails
+      setProducts(samplePerfumes);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Load initial products
-    const loadProducts = () => {
-      const storedProducts = localStorage.getItem('products');
-      const storedTimestamp = localStorage.getItem('products_timestamp');
-      
-      if (storedProducts && storedTimestamp) {
-        const timestamp = parseInt(storedTimestamp, 10);
-        if (timestamp > lastUpdate) {
-          setProducts(JSON.parse(storedProducts));
-          setLastUpdate(timestamp);
-        }
-      } else {
-        setProducts(samplePerfumes);
-        const timestamp = Date.now();
-        localStorage.setItem('products', JSON.stringify(samplePerfumes));
-        localStorage.setItem('products_timestamp', timestamp.toString());
-        setLastUpdate(timestamp);
-      }
-    };
-
-    loadProducts();
-
-    // Listen for changes in other tabs/windows
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'products' && e.newValue) {
-        const timestamp = parseInt(localStorage.getItem('products_timestamp') || '0', 10);
-        if (timestamp > lastUpdate) {
-          setProducts(JSON.parse(e.newValue));
-          setLastUpdate(timestamp);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Poll for updates every 30 seconds
-    const interval = setInterval(loadProducts, 30000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [lastUpdate]);
+    fetchProducts();
+  }, []);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -132,6 +116,17 @@ Please confirm availability and provide delivery details.`;
     setCartItems([]);
     setIsCartOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-sans">
