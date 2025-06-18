@@ -1,214 +1,209 @@
-# DURWESH Perfume Store - Cloudflare D1 Integration
+# DURWESH Perfume Store Admin Panel
 
-This project has been enhanced with Cloudflare D1 database integration for the admin panel.
+A modern, mobile-responsive perfume store admin panel built with React, TypeScript, Tailwind CSS, and Supabase.
 
 ## Features
 
-- **Admin Panel**: Full CRUD operations for product management
-- **Cloudflare D1**: Serverless SQL database for product storage
-- **API Endpoints**: RESTful API for product operations
-- **Responsive Design**: Mobile-first design with Tailwind CSS
-- **Real-time Updates**: Automatic refresh after operations
+### 🛍️ **Customer Features**
+- Browse premium perfume collection
+- Add products to cart
+- Order via WhatsApp integration
+- Responsive design for all devices
 
-## API Endpoints
+### 🔧 **Admin Features**
+- Secure authentication with Supabase
+- Complete product management (CRUD operations)
+- Order tracking and status management
+- Real-time dashboard with statistics
+- Mobile-responsive admin interface
 
-### GET /api/products
-Fetches all products from the database.
-
-**Response:**
-```json
-{
-  "success": true,
-  "products": [
-    {
-      "id": "uuid",
-      "name": "Product Name",
-      "description": "Product description",
-      "price": 5900,
-      "imageUrl": "https://example.com/image.jpg",
-      "category": "For Him",
-      "inStock": true,
-      "createdAt": "2024-01-01T00:00:00.000Z",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }
-  ],
-  "count": 1
-}
-```
-
-### POST /api/add-product
-Adds a new product to the database.
-
-**Request Body:**
-```json
-{
-  "name": "Product Name",
-  "description": "Product description",
-  "price": 5900,
-  "imageUrl": "https://example.com/image.jpg",
-  "category": "For Him",
-  "inStock": true
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Product added successfully",
-  "product": {
-    "id": "generated-uuid",
-    "name": "Product Name",
-    "description": "Product description",
-    "price": 5900,
-    "imageUrl": "https://example.com/image.jpg",
-    "category": "For Him",
-    "inStock": true,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-### DELETE /api/delete-product/{id}
-Deletes a product from the database.
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Product deleted successfully"
-}
-```
-
-## Database Schema
-
-The D1 database uses the following schema:
-
-```sql
-CREATE TABLE products (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT NOT NULL,
-  price REAL NOT NULL CHECK (price > 0),
-  imageUrl TEXT NOT NULL,
-  category TEXT NOT NULL,
-  inStock INTEGER NOT NULL DEFAULT 1 CHECK (inStock IN (0, 1)),
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
+### 🏗️ **Technical Features**
+- TypeScript for type safety
+- Supabase for backend and authentication
+- Tailwind CSS for styling
+- React Hook Form for form handling
+- Modular component architecture
 
 ## Setup Instructions
 
-### 1. Create Cloudflare D1 Database
+### 1. Clone and Install
 
 ```bash
-# Create a new D1 database
-npx wrangler d1 create durwesh-perfumes
-
-# Note the database ID from the output and update wrangler.toml
+git clone <repository-url>
+cd perfume-store-admin
+npm install
 ```
 
-### 2. Initialize Database Schema
+### 2. Supabase Setup
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Copy your project URL and anon key
+3. Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 3. Database Setup
+
+1. Go to your Supabase project dashboard
+2. Navigate to SQL Editor
+3. Run the migration file `supabase/migrations/create_tables.sql`
+
+This will create:
+- `products` table with sample data
+- `orders` table for order tracking
+- Proper indexes and RLS policies
+
+### 4. Admin User Setup
+
+1. Go to Authentication > Users in your Supabase dashboard
+2. Create a new user with email/password
+3. This user will have admin access to the panel
+
+### 5. Run the Application
 
 ```bash
-# Apply the schema to your database
-npx wrangler d1 execute durwesh-perfumes --file=./schema.sql
-```
-
-### 3. Deploy Functions
-
-```bash
-# Deploy to Cloudflare Pages
-npx wrangler pages deploy dist
-
-# Or deploy functions separately
-npx wrangler deploy
-```
-
-### 4. Configure Routes
-
-Update your `wrangler.toml` with your actual domain and database IDs:
-
-```toml
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "durwesh-perfumes"
-database_id = "your-actual-database-id"
-
-[[env.production.routes]]
-pattern = "yourdomain.com/api/*"
-zone_name = "yourdomain.com"
-```
-
-## Admin Panel Features
-
-### Product Management
-- ✅ Add new products with validation
-- ✅ View all products in responsive grid
-- ✅ Edit existing products
-- ✅ Delete products with confirmation
-- ✅ Real-time stock status
-- ✅ Image preview functionality
-- ✅ Form validation and error handling
-- ✅ Success/error notifications
-- ✅ Automatic list refresh after operations
-
-### Responsive Design
-- ✅ Mobile-first approach
-- ✅ Tablet and desktop optimized
-- ✅ Touch-friendly interface
-- ✅ Accessible form controls
-
-### Data Validation
-- ✅ Required field validation
-- ✅ URL format validation for images
-- ✅ Price validation (positive numbers)
-- ✅ Character limits for descriptions
-- ✅ Category selection validation
-
-## Environment Variables
-
-No environment variables are required as the D1 database binding is configured through `wrangler.toml`.
-
-## Error Handling
-
-The API includes comprehensive error handling:
-- Input validation
-- Database connection errors
-- Missing resource errors (404)
-- Method not allowed errors (405)
-- Internal server errors (500)
-
-All errors return a consistent JSON format:
-```json
-{
-  "success": false,
-  "error": "Error message description"
-}
-```
-
-## CORS Support
-
-All API endpoints include CORS headers to support cross-origin requests from your frontend application.
-
-## Development
-
-For local development:
-
-```bash
-# Start local development server
 npm run dev
-
-# Test with local D1 database
-npx wrangler d1 execute durwesh-perfumes --local --file=./schema.sql
 ```
 
-## Production Deployment
+Visit:
+- `http://localhost:5173/` - Customer store
+- `http://localhost:5173/admin` - Admin panel
 
-1. Build the project: `npm run build`
-2. Deploy to Cloudflare Pages: `npx wrangler pages deploy dist`
-3. Ensure your D1 database is properly bound in the Cloudflare dashboard
+## Project Structure
 
-The admin panel will automatically use the production API endpoints when deployed.
+```
+src/
+├── components/
+│   ├── ui/                 # Reusable UI components
+│   │   ├── Button.tsx
+│   │   ├── Modal.tsx
+│   │   ├── Toast.tsx
+│   │   └── LoadingSpinner.tsx
+│   ├── ProductCard.tsx     # Product display component
+│   ├── ProductForm.tsx     # Product add/edit form
+│   └── OrderList.tsx       # Order management component
+├── pages/
+│   ├── index.tsx          # Customer store page
+│   └── admin.tsx          # Admin dashboard
+├── types/
+│   └── index.ts           # TypeScript type definitions
+└── App.tsx                # Main app component
+
+lib/
+└── supabase.ts            # Supabase client and API functions
+
+supabase/
+└── migrations/
+    └── create_tables.sql  # Database schema
+```
+
+## API Functions
+
+### Products API
+- `productAPI.getAll()` - Fetch all products
+- `productAPI.getById(id)` - Get single product
+- `productAPI.create(data)` - Create new product
+- `productAPI.update(id, data)` - Update product
+- `productAPI.delete(id)` - Delete product
+- `productAPI.toggleStock(id)` - Toggle stock status
+
+### Orders API
+- `orderAPI.create(data)` - Create new order
+- `orderAPI.getAll()` - Fetch all orders
+- `orderAPI.updateStatus(id, status)` - Update order status
+
+### Auth API
+- `authAPI.signIn(email, password)` - Admin login
+- `authAPI.signOut()` - Admin logout
+- `authAPI.getCurrentUser()` - Get current user
+- `authAPI.onAuthStateChange(callback)` - Listen to auth changes
+
+## Database Schema
+
+### Products Table
+```sql
+- id (UUID, Primary Key)
+- name (TEXT, Required)
+- price (DECIMAL, Required, > 0)
+- image_url (TEXT, Required)
+- description (TEXT, Required)
+- category (TEXT, Required)
+- in_stock (BOOLEAN, Default: true)
+- created_at (TIMESTAMPTZ)
+- updated_at (TIMESTAMPTZ)
+```
+
+### Orders Table
+```sql
+- id (UUID, Primary Key)
+- items (JSONB, Required) - Array of order items
+- total_price (DECIMAL, Required, > 0)
+- phone_number (TEXT, Optional)
+- status (TEXT, Default: 'pending')
+- created_at (TIMESTAMPTZ)
+- updated_at (TIMESTAMPTZ)
+```
+
+## WhatsApp Integration
+
+When customers click "Order via WhatsApp":
+1. Order is saved to the database
+2. WhatsApp message is generated with order details
+3. Customer is redirected to WhatsApp with pre-filled message
+4. Cart is cleared after successful order
+
+Example WhatsApp message:
+```
+Hi! I'm interested in:
+- Arabian Oud (Qty: 2)
+- Musk Blossom (Qty: 1)
+Total: KES 5,000
+```
+
+## Security
+
+- Row Level Security (RLS) enabled on all tables
+- Public read access to products
+- Authenticated access required for admin operations
+- CORS properly configured
+- Input validation on both client and server
+
+## Responsive Design
+
+- Mobile-first approach
+- Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
+- Touch-friendly interface
+- Optimized for all screen sizes
+
+## Deployment
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Deploy to Vercel/Netlify
+1. Connect your repository
+2. Set environment variables
+3. Deploy the `dist` folder
+
+### Environment Variables for Production
+```env
+VITE_SUPABASE_URL=your_production_supabase_url
+VITE_SUPABASE_ANON_KEY=your_production_anon_key
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
