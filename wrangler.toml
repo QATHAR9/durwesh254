@@ -1,10 +1,8 @@
-# 🌐 Matches your Cloudflare Pages project
 name = "durwesh254"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-01-15"
 compatibility_flags = ["nodejs_compat"]
 
-# 🏗️ Pages Build Settings
 [build]
 command = "npm run build"
 cwd = "."
@@ -13,16 +11,14 @@ watch_dir = "src"
 [build.upload]
 format = "modules"
 
-# 🚀 Production Environment
 [env.production]
 name = "durwesh254"
 
 [[env.production.d1_databases]]
-binding = "durwesh-db"  # Used in your code like env["durwesh-db"]
+binding = "durwesh-db"
 database_name = "durwesh-db"
 database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
 
-# 🧪 Development Environment
 [env.development]
 name = "durwesh254-dev"
 
