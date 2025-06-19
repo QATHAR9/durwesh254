@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { ShoppingCart, Plus, Minus } from 'lucide-react'
 import { Product, CartItem } from '../types'
-import { productAPI, orderAPI } from '../../lib/supabase'
+import { api } from '../lib/api'
 import ProductCard from '../components/ProductCard'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
@@ -22,12 +22,16 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     loadProducts()
+    
+    // Set up polling for real-time updates
+    const interval = setInterval(loadProducts, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadProducts = async () => {
     try {
-      setLoading(true)
-      const data = await productAPI.getAll()
+      if (products.length === 0) setLoading(true)
+      const data = await api.getProducts()
       setProducts(data)
     } catch (error) {
       console.error('Error loading products:', error)
@@ -56,7 +60,7 @@ const HomePage: React.FC = () => {
     showToast('success', `${product.name} added to cart`)
   }
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = (productId: number, quantity: number) => {
     if (quantity <= 0) {
       setCart(prev => prev.filter(item => item.id !== productId))
     } else {
@@ -102,10 +106,10 @@ const HomePage: React.FC = () => {
           price: item.price
         })),
         total_price: getTotalPrice(),
-        status: 'pending' as const
+        phone_number: '254706183308'
       }
 
-      await orderAPI.create(orderData)
+      await api.createOrder(orderData)
 
       // Generate WhatsApp message
       const message = generateWhatsAppMessage()
@@ -153,17 +157,25 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold text-gray-900">DURWESH</h1>
-            <button
-              onClick={() => setCartOpen(true)}
-              className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ShoppingCart size={24} />
-              {getTotalItems() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {getTotalItems()}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-4">
+              <a
+                href="/admin"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Admin
+              </a>
+              <button
+                onClick={() => setCartOpen(true)}
+                className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ShoppingCart size={24} />
+                {getTotalItems() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {getTotalItems()}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>

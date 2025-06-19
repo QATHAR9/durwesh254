@@ -1,5 +1,5 @@
 {
-  "name": "perfume-store-admin",
+  "name": "durwesh-perfume-store",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,10 +7,13 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler pages deploy ./dist",
+    "db:create": "wrangler d1 create perfume-db",
+    "db:migrate": "wrangler d1 execute perfume-db --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute perfume-db --local --file=./schema.sql"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -31,6 +34,7 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "vite": "^5.4.2",
+    "wrangler": "^3.78.12"
   }
 }

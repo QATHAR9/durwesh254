@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Package, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import { Product, Order } from '../types'
-import { productAPI, orderAPI, authAPI } from '../../lib/supabase'
+import { api } from '../lib/api'
 import ProductCard from '../components/ProductCard'
 import ProductForm from '../components/ProductForm'
 import OrderList from '../components/OrderList'
@@ -18,9 +18,6 @@ const AdminPage: React.FC = () => {
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [authLoading, setAuthLoading] = useState(true)
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
   const [toast, setToast] = useState<{
     type: 'success' | 'error' | 'warning'
     message: string
@@ -28,43 +25,19 @@ const AdminPage: React.FC = () => {
   }>({ type: 'success', message: '', visible: false })
 
   useEffect(() => {
-    // Check authentication
-    const checkAuth = async () => {
-      try {
-        const currentUser = await authAPI.getCurrentUser()
-        setUser(currentUser)
-      } catch (error) {
-        console.error('Auth check failed:', error)
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-
-    checkAuth()
-
-    // Listen to auth changes
-    const { data: { subscription } } = authAPI.onAuthStateChange((user) => {
-      setUser(user)
-      if (user) {
-        loadData()
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    loadData()
+    
+    // Set up polling for real-time updates
+    const interval = setInterval(loadData, 5000)
+    return () => clearInterval(interval)
   }, [])
-
-  useEffect(() => {
-    if (user) {
-      loadData()
-    }
-  }, [user])
 
   const loadData = async () => {
     try {
-      setLoading(true)
+      if (products.length === 0 && orders.length === 0) setLoading(true)
       const [productsData, ordersData] = await Promise.all([
-        productAPI.getAll(),
-        orderAPI.getAll()
+        api.getProducts(),
+        api.getOrders()
       ])
       setProducts(productsData)
       setOrders(ordersData)
@@ -80,37 +53,14 @@ const AdminPage: React.FC = () => {
     setToast({ type, message, visible: true })
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      setFormLoading(true)
-      await authAPI.signIn(loginForm.email, loginForm.password)
-      showToast('success', 'Logged in successfully')
-    } catch (error: any) {
-      showToast('error', error.message || 'Login failed')
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    try {
-      await authAPI.signOut()
-      setUser(null)
-      showToast('success', 'Logged out successfully')
-    } catch (error: any) {
-      showToast('error', error.message || 'Logout failed')
-    }
-  }
-
   const handleProductSubmit = async (data: any) => {
     try {
       setFormLoading(true)
       if (editingProduct) {
-        await productAPI.update(editingProduct.id, data)
+        await api.updateProduct(editingProduct.id, data)
         showToast('success', 'Product updated successfully')
       } else {
-        await productAPI.create(data)
+        await api.createProduct(data)
         showToast('success', 'Product created successfully')
       }
       await loadData()
@@ -134,7 +84,7 @@ const AdminPage: React.FC = () => {
     }
 
     try {
-      await productAPI.delete(product.id)
+      await api.deleteProduct(product.id)
       showToast('success', 'Product deleted successfully')
       await loadData()
     } catch (error: any) {
@@ -144,7 +94,7 @@ const AdminPage: React.FC = () => {
 
   const handleToggleStock = async (product: Product) => {
     try {
-      await productAPI.toggleStock(product.id)
+      await api.toggleProductStock(product.id)
       showToast('success', `Product ${product.in_stock ? 'marked as out of stock' : 'marked as in stock'}`)
       await loadData()
     } catch (error: any) {
@@ -154,7 +104,7 @@ const AdminPage: React.FC = () => {
 
   const handleUpdateOrderStatus = async (orderId: string, status: Order['status']) => {
     try {
-      await orderAPI.updateStatus(orderId, status)
+      await api.updateOrderStatus(parseInt(orderId), status)
       showToast('success', 'Order status updated')
       await loadData()
     } catch (error: any) {
@@ -187,65 +137,12 @@ const AdminPage: React.FC = () => {
     }).format(price)
   }
 
-  // Show loading while checking auth
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show login form if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-            <p className="text-gray-600 mt-2">Sign in to access the admin panel</p>
-          </div>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={loginForm.email}
-                onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={loginForm.password}
-                onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <Button
-              type="submit"
-              loading={formLoading}
-              className="w-full"
-            >
-              Sign In
-            </Button>
-          </form>
+          <p className="mt-4 text-gray-600">Loading admin panel...</p>
         </div>
       </div>
     )
@@ -261,10 +158,12 @@ const AdminPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold text-gray-900">DURWESH Admin</h1>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Welcome, {user.email}</span>
-              <Button variant="secondary" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
+              <a
+                href="/"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                ← Back to Store
+              </a>
             </div>
           </div>
         </div>
@@ -365,11 +264,7 @@ const AdminPage: React.FC = () => {
                   </Button>
                 </div>
 
-                {loading ? (
-                  <div className="flex justify-center py-12">
-                    <LoadingSpinner size="lg" />
-                  </div>
-                ) : products.length === 0 ? (
+                {products.length === 0 ? (
                   <div className="text-center py-12">
                     <Package size={48} className="mx-auto text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
@@ -401,16 +296,10 @@ const AdminPage: React.FC = () => {
                   <h2 className="text-lg font-semibold text-gray-900">Orders</h2>
                 </div>
 
-                {loading ? (
-                  <div className="flex justify-center py-12">
-                    <LoadingSpinner size="lg" />
-                  </div>
-                ) : (
-                  <OrderList
-                    orders={orders}
-                    onUpdateStatus={handleUpdateOrderStatus}
-                  />
-                )}
+                <OrderList
+                  orders={orders}
+                  onUpdateStatus={handleUpdateOrderStatus}
+                />
               </div>
             )}
           </div>
