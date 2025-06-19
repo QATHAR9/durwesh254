@@ -2,7 +2,7 @@ name = "durwesh254"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-01-15"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
+pages_build_output_dir = "dist" # ✅ Required for Pages to detect build
 
 [build]
 command = "npm run build"
@@ -13,22 +13,6 @@ watch_dir = "src"
 format = "modules"
 
 [[d1_databases]]
-binding = "durwesh-db"
-database_name = "durwesh-db"
-database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
-
-[env.production]
-name = "durwesh254"
-
-[[env.production.d1_databases]]
-binding = "durwesh-db"
-database_name = "durwesh-db"
-database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
-
-[env.development]
-name = "durwesh254-dev"
-
-[[env.development.d1_databases]]
-binding = "durwesh-db"
+binding = "DB"
 database_name = "durwesh-db"
 database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
