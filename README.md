@@ -1,209 +1,224 @@
-# DURWESH Perfume Store Admin Panel
+# DURWESH Perfume Store - Cloudflare D1 Edition
 
-A modern, mobile-responsive perfume store admin panel built with React, TypeScript, Tailwind CSS, and Supabase.
+A fully edge-native perfume store built with React, Vite, Tailwind CSS, and Cloudflare D1 database. Ultra-low latency with global edge deployment.
 
-## Features
+## 🚀 **Tech Stack**
 
-### 🛍️ **Customer Features**
-- Browse premium perfume collection
-- Add products to cart
-- Order via WhatsApp integration
-- Responsive design for all devices
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Cloudflare Workers + Pages Functions
+- **Database**: Cloudflare D1 (SQLite at the edge)
+- **Hosting**: Cloudflare Pages
+- **Real-time**: Polling-based updates (5s intervals)
 
-### 🔧 **Admin Features**
-- Secure authentication with Supabase
-- Complete product management (CRUD operations)
-- Order tracking and status management
-- Real-time dashboard with statistics
-- Mobile-responsive admin interface
+## 🏗️ **Architecture**
 
-### 🏗️ **Technical Features**
-- TypeScript for type safety
-- Supabase for backend and authentication
-- Tailwind CSS for styling
-- React Hook Form for form handling
-- Modular component architecture
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React App     │───▶│  Pages Functions │───▶│   D1 Database   │
+│  (Cloudflare    │    │   (API Layer)    │    │   (SQLite)      │
+│     Pages)      │    │                  │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
 
-## Setup Instructions
+## 📦 **Features**
 
-### 1. Clone and Install
+### **Customer Store**
+- ✅ Browse products with real-time stock updates
+- ✅ Add to cart with quantity management
+- ✅ WhatsApp integration for orders
+- ✅ Responsive design for all devices
+- ✅ Auto-refresh every 5 seconds
+
+### **Admin Panel**
+- ✅ Product management (CRUD operations)
+- ✅ Order tracking and status updates
+- ✅ Real-time dashboard with statistics
+- ✅ Image URL validation with preview
+- ✅ Stock status toggle
+
+### **Database Schema**
+```sql
+products:
+- id (INTEGER PRIMARY KEY)
+- name, description, price
+- image_url, category
+- in_stock (BOOLEAN)
+- created_at, updated_at
+
+orders:
+- id (INTEGER PRIMARY KEY)
+- items (JSON string)
+- total_price, customer_name, phone_number
+- status (pending/confirmed/completed/cancelled)
+- created_at, updated_at
+```
+
+## 🚀 **Quick Start**
+
+### 1. **Setup Cloudflare D1 Database**
 
 ```bash
-git clone <repository-url>
-cd perfume-store-admin
+# Create D1 database
+npm run db:create
+
+# This will output your database ID - copy it to wrangler.toml
+```
+
+### 2. **Configure wrangler.toml**
+
+Update `wrangler.toml` with your database ID:
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "perfume-db"
+database_id = "your-database-id-here"  # Replace with actual ID
+```
+
+### 3. **Initialize Database**
+
+```bash
+# Run migrations
+npm run db:migrate
+
+# For local development
+npm run db:migrate:local
+```
+
+### 4. **Development**
+
+```bash
+# Install dependencies
 npm install
-```
 
-### 2. Supabase Setup
-
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Copy your project URL and anon key
-3. Create a `.env` file in the root directory:
-
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-### 3. Database Setup
-
-1. Go to your Supabase project dashboard
-2. Navigate to SQL Editor
-3. Run the migration file `supabase/migrations/create_tables.sql`
-
-This will create:
-- `products` table with sample data
-- `orders` table for order tracking
-- Proper indexes and RLS policies
-
-### 4. Admin User Setup
-
-1. Go to Authentication > Users in your Supabase dashboard
-2. Create a new user with email/password
-3. This user will have admin access to the panel
-
-### 5. Run the Application
-
-```bash
+# Start dev server
 npm run dev
+
+# Visit http://localhost:5173
 ```
 
-Visit:
-- `http://localhost:5173/` - Customer store
-- `http://localhost:5173/admin` - Admin panel
+### 5. **Deploy to Production**
 
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── ui/                 # Reusable UI components
-│   │   ├── Button.tsx
-│   │   ├── Modal.tsx
-│   │   ├── Toast.tsx
-│   │   └── LoadingSpinner.tsx
-│   ├── ProductCard.tsx     # Product display component
-│   ├── ProductForm.tsx     # Product add/edit form
-│   └── OrderList.tsx       # Order management component
-├── pages/
-│   ├── index.tsx          # Customer store page
-│   └── admin.tsx          # Admin dashboard
-├── types/
-│   └── index.ts           # TypeScript type definitions
-└── App.tsx                # Main app component
-
-lib/
-└── supabase.ts            # Supabase client and API functions
-
-supabase/
-└── migrations/
-    └── create_tables.sql  # Database schema
-```
-
-## API Functions
-
-### Products API
-- `productAPI.getAll()` - Fetch all products
-- `productAPI.getById(id)` - Get single product
-- `productAPI.create(data)` - Create new product
-- `productAPI.update(id, data)` - Update product
-- `productAPI.delete(id)` - Delete product
-- `productAPI.toggleStock(id)` - Toggle stock status
-
-### Orders API
-- `orderAPI.create(data)` - Create new order
-- `orderAPI.getAll()` - Fetch all orders
-- `orderAPI.updateStatus(id, status)` - Update order status
-
-### Auth API
-- `authAPI.signIn(email, password)` - Admin login
-- `authAPI.signOut()` - Admin logout
-- `authAPI.getCurrentUser()` - Get current user
-- `authAPI.onAuthStateChange(callback)` - Listen to auth changes
-
-## Database Schema
-
-### Products Table
-```sql
-- id (UUID, Primary Key)
-- name (TEXT, Required)
-- price (DECIMAL, Required, > 0)
-- image_url (TEXT, Required)
-- description (TEXT, Required)
-- category (TEXT, Required)
-- in_stock (BOOLEAN, Default: true)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
-
-### Orders Table
-```sql
-- id (UUID, Primary Key)
-- items (JSONB, Required) - Array of order items
-- total_price (DECIMAL, Required, > 0)
-- phone_number (TEXT, Optional)
-- status (TEXT, Default: 'pending')
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
-
-## WhatsApp Integration
-
-When customers click "Order via WhatsApp":
-1. Order is saved to the database
-2. WhatsApp message is generated with order details
-3. Customer is redirected to WhatsApp with pre-filled message
-4. Cart is cleared after successful order
-
-Example WhatsApp message:
-```
-Hi! I'm interested in:
-- Arabian Oud (Qty: 2)
-- Musk Blossom (Qty: 1)
-Total: KES 5,000
-```
-
-## Security
-
-- Row Level Security (RLS) enabled on all tables
-- Public read access to products
-- Authenticated access required for admin operations
-- CORS properly configured
-- Input validation on both client and server
-
-## Responsive Design
-
-- Mobile-first approach
-- Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
-- Touch-friendly interface
-- Optimized for all screen sizes
-
-## Deployment
-
-### Build for Production
 ```bash
-npm run build
+# Build and deploy
+npm run deploy
+
+# Your site will be live at: https://your-project.pages.dev
 ```
 
-### Deploy to Vercel/Netlify
-1. Connect your repository
-2. Set environment variables
-3. Deploy the `dist` folder
+## 📁 **Project Structure**
 
-### Environment Variables for Production
-```env
-VITE_SUPABASE_URL=your_production_supabase_url
-VITE_SUPABASE_ANON_KEY=your_production_anon_key
+```
+├── functions/                 # Cloudflare Pages Functions (API)
+│   ├── _middleware.ts        # CORS middleware
+│   ├── products.ts           # GET /functions/products
+│   ├── add-product.ts        # POST /functions/add-product
+│   ├── update-product/[id].ts # PUT /functions/update-product/123
+│   ├── delete-product/[id].ts # DELETE /functions/delete-product/123
+│   ├── toggle-stock/[id].ts  # PATCH /functions/toggle-stock/123
+│   ├── orders.ts             # GET/POST /functions/orders
+│   └── update-order-status/[id].ts # PATCH /functions/update-order-status/123
+├── lib/
+│   ├── d1.ts                 # D1 database helpers
+│   └── api.ts                # Frontend API client
+├── src/
+│   ├── components/           # React components
+│   ├── pages/               # Route pages
+│   ├── types/               # TypeScript types
+│   └── lib/                 # Utilities
+├── schema.sql               # Database schema
+├── wrangler.toml           # Cloudflare configuration
+└── package.json
 ```
 
-## Contributing
+## 🔧 **API Endpoints**
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+### **Products**
+- `GET /functions/products` - List all products
+- `POST /functions/add-product` - Create product
+- `PUT /functions/update-product/[id]` - Update product
+- `DELETE /functions/delete-product/[id]` - Delete product
+- `PATCH /functions/toggle-stock/[id]` - Toggle stock status
 
-## License
+### **Orders**
+- `GET /functions/orders` - List all orders
+- `POST /functions/orders` - Create order
+- `PATCH /functions/update-order-status/[id]` - Update order status
 
-MIT License - see LICENSE file for details
+## 🌐 **Real-time Updates**
+
+The app uses polling-based real-time updates:
+
+- **Frontend polls every 5 seconds** for product/order changes
+- **Optimistic updates** for immediate UI feedback
+- **Error handling** with automatic retry
+- **Loading states** during operations
+
+## 💰 **Cost Optimization**
+
+This setup is designed for **Cloudflare's Free Tier**:
+
+- **Pages**: 500 builds/month, unlimited bandwidth
+- **Workers**: 100,000 requests/day
+- **D1**: 5 million reads, 100,000 writes/day
+- **Global edge deployment** included
+
+## 🔐 **Security Features**
+
+- ✅ **Input validation** on all endpoints
+- ✅ **CORS headers** properly configured
+- ✅ **SQL injection protection** with prepared statements
+- ✅ **Type safety** with TypeScript
+- ✅ **Error handling** with proper status codes
+
+## 📱 **Mobile Optimization**
+
+- ✅ **Touch-friendly** interface
+- ✅ **Responsive grid** layouts
+- ✅ **Fast loading** with edge caching
+- ✅ **Offline-ready** with service worker (optional)
+
+## 🚀 **Performance**
+
+- **Sub-100ms response times** globally
+- **Edge caching** for static assets
+- **Optimized bundle** with code splitting
+- **Real-time updates** without WebSockets
+
+## 🛠️ **Development Commands**
+
+```bash
+# Database operations
+npm run db:create          # Create D1 database
+npm run db:migrate         # Run migrations (production)
+npm run db:migrate:local   # Run migrations (local)
+
+# Development
+npm run dev               # Start dev server
+npm run build            # Build for production
+npm run preview          # Preview production build
+
+# Deployment
+npm run deploy           # Deploy to Cloudflare Pages
+```
+
+## 🌍 **Global Edge Deployment**
+
+Your perfume store will be deployed to **200+ cities worldwide** with:
+
+- **Ultra-low latency** (sub-100ms globally)
+- **99.9% uptime** SLA
+- **Automatic scaling** to handle traffic spikes
+- **DDoS protection** included
+- **SSL/TLS** encryption by default
+
+## 📊 **Monitoring**
+
+Monitor your store with Cloudflare Analytics:
+
+- **Real-time traffic** metrics
+- **Performance insights**
+- **Error tracking**
+- **Geographic distribution**
+
+Perfect for a modern, scalable perfume store with global reach! 🌟
