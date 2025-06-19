@@ -2,6 +2,7 @@ name = "durwesh254"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-01-15"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
 
 [build]
 command = "npm run build"
@@ -10,6 +11,11 @@ watch_dir = "src"
 
 [build.upload]
 format = "modules"
+
+[[d1_databases]]
+binding = "durwesh-db"
+database_name = "durwesh-db"
+database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
 
 [env.production]
 name = "durwesh254"
