@@ -13,6 +13,22 @@ watch_dir = "src"
 format = "modules"
 
 [[d1_databases]]
-binding = "DB"
+binding = "durwesh-db"
+database_name = "durwesh-db"
+database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
+
+[env.production]
+name = "durwesh254"
+
+[[env.production.d1_databases]]
+binding = "durwesh-db"
+database_name = "durwesh-db"
+database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
+
+[env.development]
+name = "durwesh254-dev"
+
+[[env.development.d1_databases]]
+binding = "durwesh-db"
 database_name = "durwesh-db"
 database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
