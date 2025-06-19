@@ -2,7 +2,7 @@ name = "durwesh254"
 main = "functions/_middleware.ts"
 compatibility_date = "2024-01-15"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist" # ✅ Required for Pages to detect build
+pages_build_output_dir = "dist"
 
 [build]
 command = "npm run build"
