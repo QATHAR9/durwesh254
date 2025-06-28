@@ -15,10 +15,33 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch products from API
+  // Fetch products from API with fallback
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products');
+      // Check if we're in development mode
+      const isDevelopment = import.meta.env.DEV;
+      
+      if (isDevelopment) {
+        // In development, use sample data directly
+        console.log('Development mode: Using sample data');
+        setProducts(samplePerfumes);
+        setIsLoading(false);
+        return;
+      }
+
+      // In production, try to fetch from API
+      const response = await fetch('/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Check if response is actually JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('API endpoint not available - received HTML instead of JSON');
+      }
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -33,6 +56,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      console.log('Falling back to sample data');
       // Fallback to sample data if API fails
       setProducts(samplePerfumes);
     } finally {

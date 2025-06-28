@@ -37,11 +37,48 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, on
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // Fetch products from API
+  // Check if API is available
+  const isApiAvailable = async () => {
+    try {
+      const response = await fetch('/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const contentType = response.headers.get('content-type');
+      return contentType && contentType.includes('application/json');
+    } catch {
+      return false;
+    }
+  };
+
+  // Fetch products from API with fallback
   const fetchProducts = async () => {
     try {
       setIsRefreshing(true);
-      const response = await fetch('/api/products');
+      
+      // Check if we're in development mode or if API is not available
+      const isDevelopment = import.meta.env.DEV;
+      const apiAvailable = await isApiAvailable();
+      
+      if (isDevelopment || !apiAvailable) {
+        console.log('Using local storage for product management');
+        // Use local products from localStorage or props
+        setProducts(localProducts);
+        setIsLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
+      // Try to fetch from API in production
+      const response = await fetch('/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -56,8 +93,8 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, on
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-      showNotification('error', 'Failed to load products. Please try again.');
-      // Fallback to local products if API fails
+      showNotification('error', 'API not available. Using local storage.');
+      // Fallback to local products
       setProducts(localProducts);
     } finally {
       setIsLoading(false);
@@ -68,7 +105,7 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, on
   // Load products on component mount
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [localProducts]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -150,23 +187,42 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, on
         inStock: formData.inStock
       };
 
-      const response = await fetch('/api/add-product', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productData),
-      });
+      // Check if API is available
+      const apiAvailable = await isApiAvailable();
+      
+      if (apiAvailable) {
+        // Try API first
+        const response = await fetch('/api/add-product', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok && result.success) {
+        if (response.ok && result.success) {
+          showNotification('success', editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
+          resetForm();
+          await fetchProducts();
+          return;
+        } else {
+          throw new Error(result.error || 'Failed to save product');
+        }
+      } else {
+        // Fallback to local storage
+        if (editingProduct) {
+          onUpdateProduct(editingProduct.id, productData);
+        } else {
+          onAddProduct(productData);
+        }
         showNotification('success', editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
         resetForm();
-        // Refresh the product list
-        await fetchProducts();
-      } else {
-        throw new Error(result.error || 'Failed to save product');
+        // Refresh local products
+        setTimeout(() => {
+          setProducts(localProducts);
+        }, 100);
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -211,18 +267,31 @@ const Admin: React.FC<AdminProps> = ({ onAddProduct, products: localProducts, on
     }
 
     try {
-      const response = await fetch(`/api/delete-product/${product.id}`, {
-        method: 'DELETE',
-      });
+      // Check if API is available
+      const apiAvailable = await isApiAvailable();
+      
+      if (apiAvailable) {
+        const response = await fetch(`/api/delete-product/${product.id}`, {
+          method: 'DELETE',
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok && result.success) {
-        showNotification('success', 'Product deleted successfully!');
-        // Refresh the product list
-        await fetchProducts();
+        if (response.ok && result.success) {
+          showNotification('success', 'Product deleted successfully!');
+          await fetchProducts();
+          return;
+        } else {
+          throw new Error(result.error || 'Failed to delete product');
+        }
       } else {
-        throw new Error(result.error || 'Failed to delete product');
+        // Fallback to local storage
+        onDeleteProduct(product.id);
+        showNotification('success', 'Product deleted successfully!');
+        // Refresh local products
+        setTimeout(() => {
+          setProducts(localProducts);
+        }, 100);
       }
     } catch (error) {
       console.error('Error deleting product:', error);
