@@ -2,6 +2,11 @@
 
 This project has been enhanced with Cloudflare D1 database integration for the admin panel.
 
+## Database Configuration
+
+**Database Name**: `durwesh-db`  
+**Database ID**: `c5d9b184-af24-4cf1-a388-a96b45b60776`
+
 ## Features
 
 - **Admin Panel**: Full CRUD operations for product management
@@ -11,6 +16,38 @@ This project has been enhanced with Cloudflare D1 database integration for the a
 - **Responsive Design**: Mobile-first design with Tailwind CSS
 - **Real-time Updates**: Automatic refresh after operations
 
+## Quick Start
+
+### Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server (uses sample data)
+npm run dev
+```
+
+### Database Setup
+
+```bash
+# Initialize the database with sample data
+npm run db:migrate
+
+# For local development database
+npm run db:migrate:local
+```
+
+### Production Deployment
+
+```bash
+# Build and deploy to Cloudflare Pages
+npm run deploy
+
+# Or deploy functions separately
+npm run deploy:functions
+```
+
 ## Development vs Production
 
 ### Development Mode
@@ -19,14 +56,14 @@ This project has been enhanced with Cloudflare D1 database integration for the a
 - Perfect for local development and testing
 
 ### Production Mode
-- Attempts to use Cloudflare D1 API endpoints
+- Uses Cloudflare D1 database via API endpoints
 - Falls back to localStorage if API is not available
 - Seamless transition between modes
 
 ## API Endpoints
 
 ### GET /api/products
-Fetches all products from the database.
+Fetches all products from the D1 database.
 
 **Response:**
 ```json
@@ -50,7 +87,7 @@ Fetches all products from the database.
 ```
 
 ### POST /api/add-product
-Adds a new product to the database.
+Adds a new product to the D1 database.
 
 **Request Body:**
 ```json
@@ -64,39 +101,12 @@ Adds a new product to the database.
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Product added successfully",
-  "product": {
-    "id": "generated-uuid",
-    "name": "Product Name",
-    "description": "Product description",
-    "price": 5900,
-    "imageUrl": "https://example.com/image.jpg",
-    "category": "For Him",
-    "inStock": true,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
 ### DELETE /api/delete-product/{id}
-Deletes a product from the database.
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Product deleted successfully"
-}
-```
+Deletes a product from the D1 database.
 
 ## Database Schema
 
-The D1 database uses the following schema:
+The D1 database (`durwesh-db`) uses the following schema:
 
 ```sql
 CREATE TABLE products (
@@ -112,74 +122,37 @@ CREATE TABLE products (
 );
 ```
 
-## Setup Instructions
+## Deployment Steps
 
-### Local Development
+### 1. Database Initialization
+The database has been configured with ID: `c5d9b184-af24-4cf1-a388-a96b45b60776`
 
-1. **Clone and Install**
-   ```bash
-   git clone <repository-url>
-   cd durwesh-perfume-store
-   npm install
-   ```
-
-2. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-   
-   The application will run in development mode using sample data and localStorage.
-
-### Production Deployment with Cloudflare
-
-#### 1. Create Cloudflare D1 Database
-
+Run the migration to set up tables and sample data:
 ```bash
-# Create a new D1 database
-npx wrangler d1 create durwesh-perfumes
-
-# Note the database ID from the output and update wrangler.toml
+npm run db:migrate
 ```
 
-#### 2. Initialize Database Schema
-
+### 2. Deploy Functions
+Deploy the Cloudflare Functions that handle API requests:
 ```bash
-# Apply the schema to your database
-npx wrangler d1 execute durwesh-perfumes --file=./supabase/migrations/20250613085628_falling_hall.sql
+npm run deploy:functions
 ```
 
-#### 3. Update Configuration
-
-Update your `wrangler.toml` with your actual domain and database IDs:
-
-```toml
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "durwesh-perfumes"
-database_id = "your-actual-database-id"
-
-[[env.production.routes]]
-pattern = "yourdomain.com/api/*"
-zone_name = "yourdomain.com"
-```
-
-#### 4. Deploy Functions
-
+### 3. Deploy Frontend
+Build and deploy the React application:
 ```bash
-# Deploy to Cloudflare Pages
-npm run build
-npx wrangler pages deploy dist
-
-# Or deploy functions separately
-npx wrangler deploy
+npm run deploy
 ```
+
+### 4. Configure Routes
+Ensure your Cloudflare Pages project has the correct function routes configured for `/api/*` endpoints.
 
 ## Admin Panel Features
 
 ### Product Management
 - ✅ Add new products with validation
 - ✅ View all products in responsive grid
-- ✅ Edit existing products
+- ✅ Edit existing products (localStorage fallback)
 - ✅ Delete products with confirmation
 - ✅ Real-time stock status
 - ✅ Image preview functionality
@@ -206,11 +179,20 @@ npx wrangler deploy
 The application automatically detects the environment:
 
 - **Development**: Uses sample data and localStorage
-- **Production**: Attempts API calls, falls back to localStorage if needed
+- **Production**: Uses Cloudflare D1 database, falls back to localStorage if needed
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run deploy` - Build and deploy to Cloudflare Pages
+- `npm run deploy:functions` - Deploy Cloudflare Functions only
+- `npm run db:migrate` - Run database migration
+- `npm run db:migrate:local` - Run migration on local database
 
 ## Error Handling
 
-The API includes comprehensive error handling:
+The application includes comprehensive error handling:
 - Input validation
 - Database connection errors
 - Missing resource errors (404)
@@ -218,35 +200,27 @@ The API includes comprehensive error handling:
 - Internal server errors (500)
 - Graceful fallback to localStorage
 
-All errors return a consistent JSON format:
-```json
-{
-  "success": false,
-  "error": "Error message description"
-}
-```
-
 ## CORS Support
 
-All API endpoints include CORS headers to support cross-origin requests from your frontend application.
+All API endpoints include CORS headers to support cross-origin requests.
 
 ## Troubleshooting
 
+### Database Connection Issues
+1. Verify the database ID in `wrangler.toml` matches your D1 database
+2. Run `npm run db:migrate` to ensure tables exist
+3. Check Cloudflare dashboard for database status
+
 ### API Not Available
 If you see "API not available. Using local storage." message:
-1. Check if Cloudflare Functions are deployed
-2. Verify wrangler.toml configuration
-3. Ensure database is properly set up
+1. Ensure Cloudflare Functions are deployed
+2. Check function logs in Cloudflare dashboard
+3. Verify routing configuration
 4. The application will continue to work with localStorage
 
 ### Development Issues
 - Ensure you're running `npm run dev`
 - Check console for any errors
-- Verify all dependencies are installed
+- Verify all dependencies are installed with `npm install`
 
-### Production Issues
-- Check Cloudflare dashboard for function logs
-- Verify database connection
-- Ensure proper routing configuration
-
-The application is designed to be resilient and will always provide a working experience, even if the API is unavailable.
+The application is designed to be resilient and will always provide a working experience, even if the database is unavailable.

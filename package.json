@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && npx wrangler pages deploy dist",
+    "deploy:functions": "npx wrangler deploy",
+    "db:migrate": "npx wrangler d1 execute durwesh-db --file=./supabase/migrations/20250613085628_falling_hall.sql",
+    "db:migrate:local": "npx wrangler d1 execute durwesh-db --local --file=./supabase/migrations/20250613085628_falling_hall.sql"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
