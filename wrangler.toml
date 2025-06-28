@@ -1,5 +1,4 @@
 name = "durwesh-perfume-store"
-main = "src/index.js"
 compatibility_date = "2024-01-15"
 
 [env.production]
@@ -7,21 +6,20 @@ name = "durwesh-perfume-store"
 
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "durwesh-perfumes"
-database_id = "your-database-id-here"
+database_name = "durwesh-db"
+database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
 
 [env.development]
 name = "durwesh-perfume-store-dev"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "durwesh-perfumes-dev"
-database_id = "your-dev-database-id-here"
+database_name = "durwesh-db"
+database_id = "c5d9b184-af24-4cf1-a388-a96b45b60776"
 
-# Functions configuration
+# Functions configuration for production
 [[env.production.routes]]
-pattern = "yourdomain.com/api/*"
-zone_name = "yourdomain.com"
+pattern = "*/api/*"
 
 [[env.development.routes]]
 pattern = "localhost:8787/api/*"
